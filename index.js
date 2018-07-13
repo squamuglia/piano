@@ -1,7 +1,11 @@
 //NEW AUDIOCONTEXT
-const ac = new AudioContext();
+const ac = new(window.AudioContext || 
+    window.webkitAudioContext || 
+    window.mozAudioContext || 
+    window.oAudioContext || 
+    window.msAudioContext);
 
-//CONSTANTS VARIABLES
+    //CONSTANTS VARIABLES
 const url = 'http://localhost:3000'
 const frequencyList = {"C": 32.70, "C#":34.65, "D":36.71, "Eb":38.89,	"E":41.20, "F":43.65, "F#":46.25,	"G":49.00, "G#":51.91,	"A":55.00,	"Bb":58.27,	"B":61.74} // frequency - key hash
 const keyValues = { "A":"C", "W":"C#", "S":"D", "E":"Eb", "D":"E", "F":"F" , "R":"F#", "G":"G" , "T":"G#", "H":"A" , "Y":"Bb", "J":"B" } //key - note hash for keypress
@@ -29,7 +33,6 @@ volumeControl.addEventListener("change", changeVolume, false);
 const sineTerms = new Float32Array([0, 0, 1, 0, 1]);
 const cosineTerms = new Float32Array(sineTerms.length);
 const customWaveform = ac.createPeriodicWave(cosineTerms, sineTerms);
-
 
  
 //SONG SELECTOR FUNCTIONALITY
