@@ -222,8 +222,6 @@ function noteRecorder(note, duration, timeIn) {
 
 //COPYING FUNCTIONALITY
 const songInputName = document.getElementById('song_name')
-document.getElementById('url_song_name').value = currentSong.name
-
 const copyBtn = document.getElementById('copy_url')
 
 copyBtn.addEventListener('click', e => {
@@ -242,16 +240,17 @@ copyBtn.addEventListener('click', e => {
 let songLocation
 
 function songToURL() {
-    songLocation = window.location.href.split("#")[1] + "#" + encodeURIComponent(JSON.stringify(currentSong))
+    songLocation = `${window.location.href.split("#")[0]}/#${encodeURIComponent(JSON.stringify(currentSong))}`
     console.log(songLocation)
 }
 
 function urlToSong() {
     let uri = decodeURIComponent(window.location.href.split("#")[1])
-    currentSong = JSON.parse(uri)
+    currentSong = JSON.parse(`${uri}`)
 }
 
 urlToSong()
+document.getElementById('url_song_name').value = currentSong.name
 
 
   function isOS() {
