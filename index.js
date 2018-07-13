@@ -40,6 +40,8 @@ let currentSongId = ""
 let currentSong = []
 
 playBtn.addEventListener("click", function(){ //plays selected song when play is clicked
+    urlToSong()
+    console.log(currentSong)
     playSong(currentSong)
     playBtn.disabled = true
     playBtn.style="background:grey;color:#fff;"
@@ -195,8 +197,8 @@ recordBtn.addEventListener('click',
 const startRecording = () => {
     recordBtn.innerHTML = "Stop"
     recordBtn.style="background:red;color:#fff;"
-    saveBtn.style="background:grey;color:#fff;"
-    saveBtn.disabled = true
+    copyBtn.style="background:grey;color:#fff;"
+    copyBtn.disabled = true
     newRecording = []
     newRecordingTimeIn = ac.currentTime
 }
@@ -204,8 +206,8 @@ const startRecording = () => {
 const stopRecording = () => {
     recordBtn.innerHTML = "Record"
     recordBtn.style=""
-    saveBtn.style=""
-    saveBtn.disabled = false
+    copyBtn.style=""
+    copyBtn.disabled = false
 }
 
 
@@ -218,29 +220,29 @@ function noteRecorder(note, duration, timeIn) {
     }
 }
 
-//SAVING FUNCTIONALITY
-const saveBtn = document.getElementById('save_song')
+//COPYING FUNCTIONALITY
 const songInputName = document.getElementById('song_name')
+document.getElementById('url_song_name').value = currentSong.name
 
+const copyBtn = document.getElementById('copy_url')
 
-saveBtn.addEventListener('click',
-    function () {
-
-        saveBtn.style="background:red;color:#fff;";
-        saveBtn.innerHTML = "Saving";
-        setTimeout(function() { saveBtn.style= ""; saveBtn.innerHTML = "Save"; songInputName.value = "Your song was saved! Click Copy." }, 1000);
-
-        currentSong = {name: songInputName.value, notes: newRecording}
-        songToURL(currentSong)
-        
-        setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
-    }
-)
+copyBtn.addEventListener('click', e => {
+    copyBtn.style="background:red;color:#fff;";
+    copyBtn.innerHTML = "Copying";
+    setTimeout(function() { copyBtn.style= ""; copyBtn.innerHTML = "Copy!";}, 1000);
+    currentSong = {name: songInputName.value, notes: newRecording}
+    
+    songToURL()
+    copyToClipboard(songLocation)
+    
+    songInputName.value = "Song Copied. Share With Your Friends!"
+    setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
+})
 
 let songLocation
 
 function songToURL() {
-    songLocation = window.location.href + "#" + encodeURIComponent(JSON.stringify(currentSong))
+    songLocation = window.location.href.split("#")[1] + "#" + encodeURIComponent(JSON.stringify(currentSong))
     console.log(songLocation)
 }
 
@@ -251,16 +253,6 @@ function urlToSong() {
 
 urlToSong()
 
-document.getElementById('url_song_name').value = currentSong.name
-
-const copyBtn = document.getElementById('copy_url')
-
-copyBtn.addEventListener('click', e => {
-    urlToSong()
-    copyToClipboard(songLocation)
-    songInputName.value = "Your Song Was Copied. Share With Your Friends!"
-    setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
-})
 
   function isOS() {
     return navigator.userAgent.match(/ipad|iphone/i);
