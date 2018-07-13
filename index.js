@@ -164,7 +164,6 @@ let endNoteTime = ""
 function playSong(song) {
     song.notes.forEach(
         note => { playNote(note.note, note.duration, note.time_in); endNoteTime = note.time_in + note.duration }
-        
     )
  }
 
@@ -277,4 +276,13 @@ function postSong(currentSong) {
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify(currentSong)}
         ).then(r => r.json()).then(init)
+}
+
+function songToURL() {
+    window.location.href += "#" + encodeURIComponent(JSON.stringify(newRecording))
+}
+
+function urlToSong() {
+    let uri = decodeURIComponent(window.location.href.split("#")[1])
+    currentSong = JSON.parse(`{"notes":${uri}}`)
 }
