@@ -21,6 +21,7 @@ h1 {
 p {
     margin-top: 0;
     font-size: 1.3em;
+    color: #fff;
 }
 
 .container {
@@ -118,7 +119,7 @@ div#E {
 
 input, select {
     padding: 0.25em;
-    min-width: 14em;
+    min-width: 12em; 
     border-radius: 6px;
     font-size: 1em;
     background: #7db97a;

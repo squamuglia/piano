@@ -12,9 +12,10 @@
     <div class="container">
             <h1>Piano Friend 👋</h1>
             <div class="controls">
-                    <input type="text" id="song_name" placeholder="Your Song Name"></input>
+                    <input type="text" id="song_name" placeholder="Name Your Song!"></input>
                     <button id="record">Record</button>
                     <button id="save_song">Save</button>
+                    <button id="copy_url" onclick="copy()">Copy!</button>
                 </div>
             <div id="keys">
                 <div class="note ivory" id="C" data-note="C">C</div>
@@ -31,9 +32,8 @@
                 <div class="note ivory" id="B" data-note="B">B</div>
             </div>
             <div class="downloader">
-                        <p>Load Song</p>
-                        <select id="song_names">
-                        </select>
+                        <p>Current Song</p>
+                        <input type="text" id="url_song_name" placeholder="Paste a URL to load a song"></input>
                          <button id="play">►</button>
                          <hr>
                          <div class="x mt1">

@@ -34,44 +34,11 @@ const sineTerms = new Float32Array([0, 0, 1, 0, 1]);
 const cosineTerms = new Float32Array(sineTerms.length);
 const customWaveform = ac.createPeriodicWave(cosineTerms, sineTerms);
 
- 
-//SONG SELECTOR FUNCTIONALITY
-//Fetches all of the song names for the song selector
-function init() {
-    fetch(`${url}/api/v1/songs`).then(r=>r.json()).then(r => {displaySongs(r); getSong()})
- }
- 
- init()
-
-//populates song selector with song option
-const songSelector = document.getElementById("song_names")
-
-function displaySongs(songs) {
-   songSelector.innerHTML = ""
-   songs.reverse().forEach(function(song){
-      songSelector.innerHTML += `
-         <option value="${song.id}">${song.name}</option>
-                `
-   })
-}
 
 //play button and song variables
 const playBtn = document.getElementById("play")
 let currentSongId = ""
 let currentSong = []
-
-//changes/downloads song when selector is changed
-function getSong() {
-    fetch(`${url}/api/v1/songs/${songSelector.value}`).then(r=>r.json()).then(r => {currentSong = r; currentSongId = r.id;})
-}
-
-songSelector.addEventListener("change", function(){ //checks if new song is chosen, fetches new song
-    if (currentSongId === songSelector.value) {
-        return
-    } else {
-        getSong()
-    }
-})
 
 playBtn.addEventListener("click", function(){ //plays selected song when play is clicked
     playSong(currentSong)
@@ -254,35 +221,58 @@ function noteRecorder(note, duration, timeIn) {
 
 //SAVING FUNCTIONALITY
 const saveBtn = document.getElementById('save_song')
+const songInputName = document.getElementById('song_name')
+
 
 saveBtn.addEventListener('click',
     function () {
-        let songName = document.getElementById('song_name')
 
         saveBtn.style="background:red;color:#fff;";
         saveBtn.innerHTML = "Saving";
-        setTimeout(function() { saveBtn.style= ""; saveBtn.innerHTML = "Save"; songName.value = "Your song was saved! Check the list." }, 1000);
+        setTimeout(function() { saveBtn.style= ""; saveBtn.innerHTML = "Save"; songInputName.value = "Your song was saved! Click Copy." }, 1000);
 
-        currentSong = {name: songName.value, notes: newRecording}
-        postSong(currentSong)
+        currentSong = {name: songInputName.value, notes: newRecording}
+        songToURL(currentSong)
         
-        setTimeout(()=> songName.value = "", 5000)
+        setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
     }
 )
 
-function postSong(currentSong) {
-    fetch(`${url}/api/v1/songs`,
-            { method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(currentSong)}
-        ).then(r => r.json()).then(init)
-}
+let songLocation
 
 function songToURL() {
-    window.location.href += "#" + encodeURIComponent(JSON.stringify(newRecording))
+    songLocation = window.location.href + "#" + encodeURIComponent(JSON.stringify(currentSong))
+    console.log(songLocation)
 }
 
 function urlToSong() {
     let uri = decodeURIComponent(window.location.href.split("#")[1])
-    currentSong = JSON.parse(`{"notes":${uri}}`)
+    currentSong = JSON.parse(uri)
 }
+
+urlToSong()
+
+document.getElementById('url_song_name').value = currentSong.name
+
+const copyBtn = document.getElementById('copy_url')
+
+copyBtn.addEventListener('click',
+
+)
+
+function copy() {
+    debugger;
+    // /* Get the text field */
+    // let copy = window.location.href;
+  
+    // /* Select the text field */
+    // copy.select();
+  
+    // /* Copy the text inside the text field */
+    // document.execCommand("copy");
+    urlToSong()
+    window.clipboardData.setData("Text", songLocation);
+    songInputName.value = "Your Song Was Copied. Share With Your Friends!"
+    setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
+
+  }
