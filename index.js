@@ -1,20 +1,86 @@
 //NEW AUDIOCONTEXT
-const ac = new(window.AudioContext || 
-    window.webkitAudioContext || 
-    window.mozAudioContext || 
-    window.oAudioContext || 
-    window.msAudioContext);
+const ac = new (window.AudioContext ||
+  window.webkitAudioContext ||
+  window.mozAudioContext ||
+  window.oAudioContext ||
+  window.msAudioContext)();
 
-    //CONSTANTS VARIABLES
-const frequencyList = {"C": 32.70, "C#":34.65, "D":36.71, "Eb":38.89,	"E":41.20, "F":43.65, "F#":46.25,	"G":49.00, "G#":51.91,	"A":55.00,	"Bb":58.27,	"B":61.74} // frequency - key hash
-const keyValues = { "A":"C", "W":"C#", "S":"D", "E":"Eb", "D":"E", "F":"F" , "R":"F#", "G":"G" , "T":"G#", "H":"A" , "Y":"Bb", "J":"B" } //key - note hash for keypress
+//AUDIOCONTEXT REFRESHER
+function webAudioTouchUnlock(context) {
+  return new Promise(function(resolve, reject) {
+    if (context.state === 'suspended' && 'ontouchstart' in window) {
+      var unlock = function() {
+        context.resume().then(
+          function() {
+            document.body.removeEventListener('touchstart', unlock);
+            document.body.removeEventListener('touchend', unlock);
+
+            resolve(true);
+          },
+          function(reason) {
+            reject(reason);
+          }
+        );
+      };
+
+      document.body.addEventListener('touchstart', unlock, false);
+      document.body.addEventListener('touchend', unlock, false);
+    } else {
+      resolve(false);
+    }
+  });
+}
+
+webAudioTouchUnlock(ac).then(
+  function(unlocked) {
+    if (unlocked) {
+      // AudioContext was unlocked from an explicit user action,
+      // sound should start playing now
+    } else {
+      // There was no need for unlocking, devices other than iOS
+    }
+  },
+  function(reason) {
+    console.error(reason);
+  }
+);
+
+//CONSTANTS VARIABLES
+const frequencyList = {
+  C: 32.7,
+  'C#': 34.65,
+  D: 36.71,
+  Eb: 38.89,
+  E: 41.2,
+  F: 43.65,
+  'F#': 46.25,
+  G: 49.0,
+  'G#': 51.91,
+  A: 55.0,
+  Bb: 58.27,
+  B: 61.74
+}; // frequency - key hash
+const keyValues = {
+  A: 'C',
+  W: 'C#',
+  S: 'D',
+  E: 'Eb',
+  D: 'E',
+  F: 'F',
+  R: 'F#',
+  G: 'G',
+  T: 'G#',
+  H: 'A',
+  Y: 'Bb',
+  J: 'B'
+}; //key - note hash for keypress
 
 //DYNAMIC VARIABLES
-const aBoolObjects = {}
-const noteObjects = {}
+const aBoolObjects = {};
+const noteObjects = {};
 
 //BUTTONS
-const frqRange = document.getElementById('frqRange')
+const frqRange = document.getElementById('frqRange');
 
 //VOLUME & WAVEFORM FUNCTIONALITY
 let volumeControl = document.querySelector("input[name='volume']");
@@ -24,265 +90,279 @@ masterGainNode.connect(ac.destination);
 
 masterGainNode.gain.value = volumeControl.value;
 
-function changeVolume(event) { masterGainNode.gain.value = volumeControl.value }
+function changeVolume(event) {
+  masterGainNode.gain.value = volumeControl.value;
+}
 
-volumeControl.addEventListener("change", changeVolume, false);
+volumeControl.addEventListener('change', changeVolume, false);
 
 //Creates custom waveform for oscillators in createNote
 const sineTerms = new Float32Array([0, 0, 1, 0, 1]);
 const cosineTerms = new Float32Array(sineTerms.length);
 const customWaveform = ac.createPeriodicWave(cosineTerms, sineTerms);
 
-
 //play button and song variables
-const playBtn = document.getElementById("play")
-let currentSongId = ""
-let currentSong = []
+const playBtn = document.getElementById('play');
+let currentSongId = '';
+let currentSong = [];
 
-playBtn.addEventListener("click", function(){ //plays selected song when play is clicked
-    urlToSong()
-    console.log(currentSong)
-    playSong(currentSong)
-    playBtn.disabled = true
-    playBtn.style="background:grey;color:#fff;"
-    setTimeout(() => { playBtn.disabled = false; playBtn.style="" }, endNoteTime*1000)
-})
+playBtn.addEventListener('click', function() {
+  //plays selected song when play is clicked
+  urlToSong();
+  console.log(currentSong);
+  playSong(currentSong);
+  playBtn.disabled = true;
+  playBtn.style = 'background:grey;color:#fff;';
+  setTimeout(() => {
+    playBtn.disabled = false;
+    playBtn.style = '';
+  }, endNoteTime * 1000);
+});
 
 //NOTES
 //builds noteObjects from list of notes and their frequencies (frequencyList)
-function createNote(key) { //for each note, 
-    let osc = ac.createOscillator();
-    let frequency = frequencyList[key]
-    osc.frequency.value = frequency*frqRange.value;
-    osc.setPeriodicWave(customWaveform); //waveform for tone
-    osc.connect(masterGainNode);
-    noteObjects[key] = osc;
-    aBoolObjects[key] = true;
+function createNote(key) {
+  //for each note,
+  let osc = ac.createOscillator();
+  let frequency = frequencyList[key];
+  osc.frequency.value = frequency * frqRange.value;
+  osc.setPeriodicWave(customWaveform); //waveform for tone
+  osc.connect(masterGainNode);
+  noteObjects[key] = osc;
+  aBoolObjects[key] = true;
 }
 
 //Iterates over frequency list
-function createNotes() { 
-    Object.keys(frequencyList).forEach(
-        key => createNote(key)
-    )
+function createNotes() {
+  Object.keys(frequencyList).forEach(key => createNote(key));
 }
 
-createNotes()
+createNotes();
 
 //PLAYING FUNCTIONALITY
 //Monkey patching adding startTime function to OscillatorNode to save ac.currentTime on each instance
-OscillatorNode.prototype.startTime = function () { this.starter = ac.currentTime}
+OscillatorNode.prototype.startTime = function() {
+  this.starter = ac.currentTime;
+};
 
 //Plays notes from playSong() and eventlisteners
 function playNote(note, duration, timeIn) {
-    createNote(note); //create new oscillator object to reset pitch
-    aBoolObjects[note] = false;
-
-    let osc = noteObjects[note]
-    osc.startTime() //sets start time (.starter) of new oscillator
-    if (timeIn) {
-        songNoteStarter(note, duration, timeIn, osc)
-    } else { 
-        singleNoteStarter(osc, note)
-        }
+  createNote(note); //create new oscillator object to reset pitch
+  aBoolObjects[note] = false;
+  let osc = noteObjects[note];
+  osc.startTime(); //sets start time (.starter) of new oscillator
+  if (timeIn) {
+    songNoteStarter(note, duration, timeIn, osc);
+  } else {
+    singleNoteStarter(osc, note);
+  }
 }
 
-const getKey = (note) => document.getElementById(note) //Get key closure
+const getKey = note => document.getElementById(note); //Get key closure
 
 function songNoteStarter(note, duration, timeIn, osc) {
-    osc.start(ac.currentTime + timeIn);
-    stopNote(note, duration, timeIn);
-    setTimeout(()=> { getKey(note).style="background: #fff7ae!important" }, timeIn*1000)
+  osc.start(ac.currentTime + timeIn);
+  stopNote(note, duration, timeIn);
+  setTimeout(() => {
+    getKey(note).style = 'background: #fff7ae!important';
+  }, timeIn * 1000);
 }
 
 function singleNoteStarter(osc, note) {
-    osc.start(); 
-    getKey(note).style="background: #fff7ae!important;" //highlights current note
+  osc.start();
+  getKey(note).style = 'background: #fff7ae!important;'; //highlights current note
 }
 
 function stopNote(note, duration, timeIn) {
-    let osc = noteObjects[note]
+  let osc = noteObjects[note];
 
-    if (duration) {
-        songNoteStopper(note, duration, timeIn, osc)
-    } else {
-        singleNoteStopper(osc, note)
-    }
+  if (duration) {
+    songNoteStopper(note, duration, timeIn, osc);
+  } else {
+    singleNoteStopper(osc, note);
+  }
 
-    aBoolObjects[note] = true;
+  aBoolObjects[note] = true;
 
-    let lengthSecNote = ac.currentTime - osc.starter // note duration
-    let timeInNote = osc.starter - newRecordingTimeIn
-    noteRecorder(note, lengthSecNote, timeInNote) //saves note on Recording Variable
+  let lengthSecNote = ac.currentTime - osc.starter; // note duration
+  let timeInNote = osc.starter - newRecordingTimeIn;
+  noteRecorder(note, lengthSecNote, timeInNote); //saves note on Recording Variable
 }
 
 function songNoteStopper(note, duration, timeIn, osc) {
-    osc.stop(ac.currentTime + timeIn + duration);
-    setTimeout(()=> getKey(note).style="", (timeIn + duration)*1000)
+  osc.stop(ac.currentTime + timeIn + duration);
+  setTimeout(() => (getKey(note).style = ''), (timeIn + duration) * 1000);
 }
 
 function singleNoteStopper(osc, note) {
-    osc.stop()
-    getKey(note).style=""
+  osc.stop();
+  getKey(note).style = '';
 }
 
 //REPLAY SONG FUNCTIONALITY
 //iterates over the array and plays the song
-let endNoteTime = ""
+let endNoteTime = '';
 function playSong(song) {
-    song.notes.forEach(
-        note => { playNote(note.note, note.duration, note.time_in); endNoteTime = note.time_in + note.duration }
-    )
- }
+  song.notes.forEach(note => {
+    playNote(note.note, note.duration, note.time_in);
+    endNoteTime = note.time_in + note.duration;
+  });
+}
 
 //PLAY NOTES WITH EVENTLISTENERS
 //plays note when pressing key
 
-const getKeyValues = (event) => keyValues[event.key.toUpperCase()]
+const getKeyValues = event => keyValues[event.key.toUpperCase()];
 
-document.addEventListener('keydown',
-    function (event) {
-      if (aBoolObjects[getKeyValues(event)]) {
-          playNote( getKeyValues(event) )
-        }
-    }
-)
+document.addEventListener('keydown', function(event) {
+  if (aBoolObjects[getKeyValues(event)]) {
+    playNote(getKeyValues(event));
+  }
+});
 
-document.addEventListener('keyup',
-   function (event){
-    if (aBoolObjects[getKeyValues(event)] == false) {
-        stopNote( getKeyValues(event) )
-    }
-   }
-)
+document.addEventListener('keyup', function(event) {
+  if (aBoolObjects[getKeyValues(event)] == false) {
+    stopNote(getKeyValues(event));
+  }
+});
 
 //plays note when clicking keyboard
-document.addEventListener('mousedown',
-  function(event) {
-        if (event.target.className.includes('note')) {
-            let note = event.target.dataset.note
-            playNote(note)
-        }
+document.addEventListener('mousedown', function(event) {
+  if (event.target.className.includes('note')) {
+    let note = event.target.dataset.note;
+    playNote(note);
   }
-)
+});
 
-document.addEventListener('mouseup',
-  function(event) {
-        if (event.target.className.includes('note')) {
-            let note = event.target.dataset.note
-            stopNote(note)
-        }
+document.addEventListener('mouseup', function(event) {
+  if (event.target.className.includes('note')) {
+    let note = event.target.dataset.note;
+    stopNote(note);
   }
-)
+});
+
+document.addEventListener('touchstart', function(event) {
+  if (event.target.className.includes('note')) {
+    let note = event.target.dataset.note;
+    playNote(note);
+    console.log(note);
+  }
+});
+
+document.addEventListener('touchend', function(event) {
+  if (event.target.className.includes('note')) {
+    let note = event.target.dataset.note;
+    stopNote(note);
+  }
+});
 
 //RECORDING FUNCTIONALITY
-let recording = false
-let newRecording = []//const to let
-let newRecordingTimeIn = ""
+let recording = false;
+let newRecording = []; //const to let
+let newRecordingTimeIn = '';
 
-const recordBtn = document.getElementById('record')
+const recordBtn = document.getElementById('record');
 
-recordBtn.addEventListener('click',
-    function(event) {
-        recording = !recording
-        console.log(recording)
-        if (recording) {
-            startRecording()
-        } else {
-            stopRecording()
-        }
-    }
-)
+recordBtn.addEventListener('click', function(event) {
+  recording = !recording;
+  console.log(recording);
+  if (recording) {
+    startRecording();
+  } else {
+    stopRecording();
+  }
+});
 
 const startRecording = () => {
-    recordBtn.innerHTML = "Stop"
-    recordBtn.style="background:red;color:#fff;"
-    copyBtn.style="background:grey;color:#fff;"
-    copyBtn.disabled = true
-    newRecording = []
-    newRecordingTimeIn = ac.currentTime
-}
+  recordBtn.innerHTML = 'Stop';
+  recordBtn.style = 'background:red;color:#fff;';
+  copyBtn.style = 'background:grey;color:#fff;';
+  copyBtn.disabled = true;
+  newRecording = [];
+  newRecordingTimeIn = ac.currentTime;
+};
 
 const stopRecording = () => {
-    recordBtn.innerHTML = "Record"
-    recordBtn.style=""
-    copyBtn.style=""
-    copyBtn.disabled = false
-}
-
+  recordBtn.innerHTML = 'Record';
+  recordBtn.style = '';
+  copyBtn.style = '';
+  copyBtn.disabled = false;
+};
 
 function noteRecorder(note, duration, timeIn) {
-    if (recording === false) {
-        return
-    } else {
-        let newNote = new Note(note, duration, timeIn)
-        newRecording.push(newNote)
-    }
+  if (recording === false) {
+    return;
+  } else {
+    let newNote = new Note(note, duration, timeIn);
+    newRecording.push(newNote);
+  }
 }
 
 //COPYING FUNCTIONALITY
-const songInputName = document.getElementById('song_name')
-const copyBtn = document.getElementById('copy_url')
+const songInputName = document.getElementById('song_name');
+const copyBtn = document.getElementById('copy_url');
 
 copyBtn.addEventListener('click', e => {
-    copyBtn.style="background:red;color:#fff;";
-    copyBtn.innerHTML = "Copying";
-    setTimeout(function() { copyBtn.style= ""; copyBtn.innerHTML = "Copy!";}, 1000);
-    currentSong = {name: songInputName.value, notes: newRecording}
-    
-    songToURL()
-    copyToClipboard(songLocation)
-    
-    songInputName.value = "Song Copied. Share With Your Friends!"
-    setTimeout(()=> songInputName.value = "Record Another Song!", 5000)
-})
+  copyBtn.style = 'background:red;color:#fff;';
+  copyBtn.innerHTML = 'Copying';
+  setTimeout(function() {
+    copyBtn.style = '';
+    copyBtn.innerHTML = 'Copy!';
+  }, 1000);
+  currentSong = { name: songInputName.value, notes: newRecording };
 
-let songLocation
+  songToURL();
+  copyToClipboard(songLocation);
+
+  songInputName.value = 'Song Copied. Share With Your Friends!';
+  setTimeout(() => (songInputName.value = 'Record Another Song!'), 5000);
+});
+
+let songLocation;
 
 function songToURL() {
-    songLocation = `${window.location.href.split("#")[0]}/#${encodeURIComponent(JSON.stringify(currentSong))}`
-    console.log(songLocation)
+  songLocation = `${window.location.href.split('#')[0]}/#${encodeURIComponent(
+    JSON.stringify(currentSong)
+  )}`;
+  console.log(songLocation);
 }
 
 function urlToSong() {
-    let uri = decodeURIComponent(window.location.href.split("#")[1])
-    currentSong = JSON.parse(`${uri}`)
+  let uri = decodeURIComponent(window.location.href.split('#')[1]);
+  currentSong = JSON.parse(`${uri}`);
 }
 
-urlToSong()
-document.getElementById('url_song_name').value = currentSong.name
+urlToSong();
+document.getElementById('url_song_name').value = currentSong.name;
 
+function isOS() {
+  return navigator.userAgent.match(/ipad|iphone/i);
+}
 
-  function isOS() {
-    return navigator.userAgent.match(/ipad|iphone/i);
-  }
-  
-  function copyToClipboard (msg) {
-    try {
-      const text = document.createElement('textarea')
-      text.value = msg
-      text.style.cssText = 'position: absolute; left: -9999px;'
-      document.body.appendChild(text)
-  
-      if (isOS()) {
-        const range = document.createRange()
-        range.selectNodeContents(text)
-  
-        const selection = window.getSelection()
-  
-        selection.removeAllRanges()
-        selection.addRange(range)
-        text.setSelectionRange(0, 999999);
-      } else {
-        text.select();
-      }
-  
-      document.execCommand('copy')
-      text.blur()
-      document.body.removeChild(text)
-    } catch (err) {
-      window.prompt('Press Cmd+C or Ctrl+C to copy to clipboard.', msg)
+function copyToClipboard(msg) {
+  try {
+    const text = document.createElement('textarea');
+    text.value = msg;
+    text.style.cssText = 'position: absolute; left: -9999px;';
+    document.body.appendChild(text);
+
+    if (isOS()) {
+      const range = document.createRange();
+      range.selectNodeContents(text);
+
+      const selection = window.getSelection();
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+      text.setSelectionRange(0, 999999);
+    } else {
+      text.select();
     }
+
+    document.execCommand('copy');
+    text.blur();
+    document.body.removeChild(text);
+  } catch (err) {
+    window.prompt('Press Cmd+C or Ctrl+C to copy to clipboard.', msg);
   }
-  
-  
+}
